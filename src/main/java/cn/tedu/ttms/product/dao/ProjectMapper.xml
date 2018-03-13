@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tedu.ttms.product.dao.ProjectDao">
+	<!-- 通过sql标签定义一个语句，可以用include标签通过id调用 -->
+	<sql id="whereQuery">
+		<where>
+			<if test="name!=null and name!=''">
+				name like concat("%",#{name},"%")
+			</if>
+			<if test="valid!=null">
+				and valid=#{valid}
+			</if>
+		</where>
+	</sql>
+	<!-- 定义一个查询语句获取所有项目信息  -->
+	<select id="findObjects" resultType="cn.tedu.ttms.product.entity.Project">
+		select * from tms_projects
+		<include refid="whereQuery"/>
+	</select>
+	<select id="findPageObjects" resultType="cn.tedu.ttms.product.entity.Project">
+		select * from tms_projects
+		<include refid="whereQuery"/>
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+	<select id="getRowCount" resultType="int">
+		select count(*) from tms_projects
+		<include refid="whereQuery"/>
+	</select>
+	<!-- 
+		禁用或启用项目信息 
+		valid表示状态值 
+		ids对应dao层方法中的数组参数 
+	-->
+	<update id="validById">
+		update tms_projects
+		set valid=#{valid}
+		where id in 
+		<!-- 通过动态sql拼接成(1,2,3,4)这样的格式的数据 -->
+		<foreach collection="ids" open="(" close=")" item="item" separator=",">
+			#{item}
+		</foreach>
+	</update>
+	
+	<!-- 根据id删除 -->
+	<delete id="deleteById">
+		delete from tms_projects
+		where id in 
+		<!-- 通过动态sql拼接成(1,2,3,4)这样的格式的数据 -->
+		<foreach collection="ids" open="(" close=")" item="item" separator=",">
+			#{item}
+		</foreach>
+	</delete>
+	
+	<!-- 插入项目 -->
+	<insert id="insertObject" parameterType="project">
+		insert into tms_projects
+		(code,
+		 name,
+		 beginDate,
+		 endDate,
+		 valid,
+		 note,
+		 createdTime,
+		 modifiedTime,
+		 createdUser,
+		 modifiedUser)
+		 values(
+		 #{code},<!-- 底层调用get方法 -->
+		 #{name},
+		 #{beginDate},
+		 #{endDate},
+		 #{valid},
+		 #{note},
+		 now(),
+		 now(),
+		 #{createdUser},
+		 #{modifiedUser}
+		 )
+	</insert>
+	<!-- 修改项目 -->
+	<update id="updateObject" parameterType="project">
+		update tms_projects
+		set code=#{code},
+			name=#{name},
+			beginDate=#{beginDate},
+			endDate=#{endDate},
+			valid=#{valid},
+			note=#{note},
+			modifiedTime=now(),
+			modifiedUser=#{modifiedUser}
+		where id=#{id}
+	</update>
+	
+	<!-- 通过id查找项目 -->
+	<select id="findObjectById" parameterType="integer" resultType="project">
+		select * from tms_projects
+		where id=#{id}
+	</select>
+</mapper>
